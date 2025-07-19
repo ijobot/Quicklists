@@ -4,10 +4,9 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-checklist-list',
-  imports: [RouterLink],
   template: `
     <ul>
-      @for (checklist of checklists(); track checklist.id) {
+      @for (checklist of checklists(); track checklist.id){
       <li>
         <a routerLink="/checklist/{{ checklist.id }}">
           {{ checklist.title }}
@@ -18,7 +17,7 @@ import { RouterLink } from '@angular/router';
       }
     </ul>
   `,
-  styles: ``,
+  imports: [RouterLink],
 })
 export class ChecklistListComponent {
   checklists = input.required<Checklist[]>();

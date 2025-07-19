@@ -7,7 +7,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
   template: `
     <header>
       <h2>{{ title() }}</h2>
-      <button (click)="close.emit()">Close</button>
+      <button (click)="close.emit()">close</button>
     </header>
     <section>
       <form [formGroup]="formGroup()" (ngSubmit)="save.emit(); close.emit()">

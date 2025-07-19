@@ -8,15 +8,22 @@ import { FormBuilder } from '@angular/forms';
 import { ChecklistItem } from '../shared/interfaces/checklist-item';
 import ModalComponent from '../shared/ui/modal.component';
 import { FormModalComponent } from '../shared/ui/form-modal.component';
+import { ChecklistItemListComponent } from './ui/checklist-item-list.component';
 
 @Component({
   selector: 'app-checklist',
-  imports: [ChecklistHeaderComponent, ModalComponent, FormModalComponent],
+  imports: [
+    ChecklistHeaderComponent,
+    ModalComponent,
+    FormModalComponent,
+    ChecklistItemListComponent,
+  ],
   template: `@if (checklist(); as checklist){
     <app-checklist-header
       [checklist]="checklist"
       (addItem)="checklistItemBeingEdited.set({})"
     />
+    <app-checklist-item-list [checklistItems]="items()" />
     }
     <app-modal [isOpen]="!!checklistItemBeingEdited()">
       <ng-template>
@@ -25,7 +32,7 @@ import { FormModalComponent } from '../shared/ui/form-modal.component';
           [formGroup]="checklistItemForm"
           (save)="checklistItemService.add$.next({
             item: checklistItemForm.getRawValue(),
-            checklistId: 'hey joe',
+            checklistId: checklist()?.id!,
           })"
           (close)="checklistItemBeingEdited.set(null)"
         ></app-form-modal>
@@ -43,11 +50,17 @@ export default class ChecklistComponent {
 
   params = toSignal(this.route.paramMap);
 
-  checklist = computed(() => {
-    this.checklistService.checklists().find((checklist) => {
-      checklist.id === this.params()?.get('id');
-    });
-  });
+  checklist = computed(() =>
+    this.checklistService
+      .checklists()
+      .find((checklist) => checklist.id === this.params()?.get('id'))
+  );
+
+  items = computed(() =>
+    this.checklistItemService
+      .checklistItems()
+      .filter((item) => item.checklistId === this.params()?.get('id'))
+  );
 
   checklistItemForm = this.formBuilder.nonNullable.group({
     title: [''],

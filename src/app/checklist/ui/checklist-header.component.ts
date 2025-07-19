@@ -11,7 +11,7 @@ import { Checklist } from '../../shared/interfaces/checklist';
         {{ checklist().title }}
       </h1>
       <div>
-        <button (click)="addItem.emit()">Add Item</button>
+        <button (click)="addItem.emit()">Add item</button>
       </div>
     </header>
   `,
