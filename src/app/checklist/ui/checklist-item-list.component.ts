@@ -1,5 +1,8 @@
-import { Component, input } from '@angular/core';
-import { ChecklistItem } from '../../shared/interfaces/checklist-item';
+import { Component, input, output } from '@angular/core';
+import {
+  ChecklistItem,
+  RemoveChecklistItem,
+} from '../../shared/interfaces/checklist-item';
 
 @Component({
   selector: 'app-checklist-item-list',
@@ -9,7 +12,13 @@ import { ChecklistItem } from '../../shared/interfaces/checklist-item';
         @for (item of checklistItems(); track item.id){
         <li>
           <div>
+            @if (item.checked){
+            <span>✅</span>
+            }
             {{ item.title }}
+          </div>
+          <div>
+            <button (click)="toggle.emit(item.id)">Toggle</button>
           </div>
         </li>
         } @empty {
@@ -24,4 +33,5 @@ import { ChecklistItem } from '../../shared/interfaces/checklist-item';
 })
 export class ChecklistItemListComponent {
   checklistItems = input.required<ChecklistItem[]>();
+  toggle = output<RemoveChecklistItem>();
 }
