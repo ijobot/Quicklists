@@ -1,35 +1,66 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, effect, inject, linkedSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject } from 'rxjs';
-import { AddChecklist, Checklist } from '../interfaces/checklist';
-
-export interface ChecklistsState {
-  checklists: Checklist[];
-}
+import { AddChecklist, EditChecklist } from '../interfaces/checklist';
+import { StorageService } from './storage.service';
+import { ChecklistItemService } from '../../checklist/data-access/checklist-item.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChecklistService {
-  // state
-  private state = signal<ChecklistsState>({
-    checklists: [],
-  });
-
-  // selectors
-  checklists = computed(() => this.state().checklists);
+  storageService = inject(StorageService);
+  checklistItemService = inject(ChecklistItemService);
 
   // sources
+  loadedChecklists = this.storageService.loadChecklists();
   add$ = new Subject<AddChecklist>();
+  edit$ = new Subject<EditChecklist>();
+  remove$ = this.checklistItemService.checklistRemoved$;
+
+  // state
+  checklists = linkedSignal({
+    source: this.loadedChecklists.value,
+    computation: (checklists) => checklists ?? [],
+  });
 
   constructor() {
-    // reducers
-    this.add$.pipe(takeUntilDestroyed()).subscribe((checklist) =>
-      this.state.update((state) => ({
-        ...state,
-        checklists: [...state.checklists, this.addIdToChecklist(checklist)],
-      }))
-    );
+    this.add$
+      .pipe(takeUntilDestroyed())
+      .subscribe((checklist) =>
+        this.checklists.update((checklists) => [
+          ...checklists,
+          this.addIdToChecklist(checklist),
+        ])
+      );
+
+    this.remove$
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) =>
+        this.checklists.update((checklists) =>
+          checklists.filter((checklist) => checklist.id !== id)
+        )
+      );
+
+    this.edit$
+      .pipe(takeUntilDestroyed())
+      .subscribe((update) =>
+        this.checklists.update((checklists) =>
+          checklists.map((checklist) =>
+            checklist.id === update.id
+              ? { ...checklist, title: update.data.title }
+              : checklist
+          )
+        )
+      );
+
+    // effects
+    effect(() => {
+      const checklists = this.checklists();
+      if (this.loadedChecklists.status() === 'resolved') {
+        this.storageService.saveChecklists(checklists);
+      }
+    });
   }
 
   private addIdToChecklist(checklist: AddChecklist) {
